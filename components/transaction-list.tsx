@@ -15,6 +15,7 @@ export function TransactionList({ accountId, initialTransactions }: TransactionL
 
   useEffect(() => {
     const supabase = createClient()
+    if (!supabase) return
 
     const channel = supabase
       .channel(`transactions-${accountId}`)
@@ -27,14 +28,13 @@ export function TransactionList({ accountId, initialTransactions }: TransactionL
           filter: `account_id=eq.${accountId}`
         },
         async (payload: RealtimePostgresChangesPayload<Transaction>) => {
-          // Buscar apenas transações de hoje
           const today = new Date().toISOString().split('T')[0]
           const { data } = await supabase
             .from('transactions')
             .select('*')
             .eq('account_id', accountId)
             .eq('data', today)
-            .gt('valor', 0) // Apenas entradas
+            .gt('valor', 0)
             .order('horario', { ascending: false })
 
           if (data) {
@@ -60,13 +60,8 @@ export function TransactionList({ accountId, initialTransactions }: TransactionL
     return timeStr.slice(0, 5)
   }
 
-  // Ocultar parte do nome do pagador (mostrar apenas asteriscos)
-  const maskName = (name: string | null) => {
-    if (!name) return '*********'
-    return '*********'
-  }
+  const maskName = () => '*********'
 
-  // Filtrar apenas transações de hoje e entradas (valor positivo)
   const today = new Date().toISOString().split('T')[0]
   const todayTransactions = transactions.filter(
     t => t.data === today && t.valor > 0
@@ -88,7 +83,7 @@ export function TransactionList({ accountId, initialTransactions }: TransactionL
           className="py-3 border-b border-border last:border-b-0"
         >
           <p className="text-foreground">
-            PIX recebido de {formatCurrency(transaction.valor)} de {maskName(transaction.pagador)} às {formatTime(transaction.horario)}
+            PIX recebido de {formatCurrency(transaction.valor)} de {maskName()} às {formatTime(transaction.horario)}
           </p>
         </div>
       ))}

@@ -8,6 +8,25 @@ export const revalidate = 0
 export default async function HomePage() {
   const supabase = await createClient()
 
+  // Se Supabase não está configurado, mostra mensagem
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="text-center py-20">
+            <h1 className="text-2xl font-bold text-foreground mb-4">
+              Configuração Necessária
+            </h1>
+            <p className="text-muted-foreground">
+              Configure as variáveis de ambiente do Supabase para visualizar as contas.
+            </p>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   const { data: accounts } = await supabase
     .from('accounts')
     .select('*')

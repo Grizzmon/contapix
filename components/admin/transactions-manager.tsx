@@ -55,7 +55,6 @@ export function TransactionsManager({ transactions, accounts }: TransactionsMana
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const [form, setForm] = useState({
     account_id: '',
@@ -76,6 +75,8 @@ export function TransactionsManager({ transactions, accounts }: TransactionsMana
   }
 
   const handleCreate = async () => {
+    const supabase = createClient()
+    if (!supabase) return
     setLoading(true)
     await supabase.from('transactions').insert({
       account_id: form.account_id,
@@ -93,6 +94,8 @@ export function TransactionsManager({ transactions, accounts }: TransactionsMana
 
   const handleUpdate = async () => {
     if (!editingTransaction) return
+    const supabase = createClient()
+    if (!supabase) return
     setLoading(true)
     await supabase.from('transactions').update({
       account_id: form.account_id,
@@ -110,6 +113,8 @@ export function TransactionsManager({ transactions, accounts }: TransactionsMana
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta transacao?')) return
+    const supabase = createClient()
+    if (!supabase) return
     await supabase.from('transactions').delete().eq('id', id)
   }
 

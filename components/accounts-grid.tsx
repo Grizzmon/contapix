@@ -17,6 +17,7 @@ export function AccountsGrid({ initialAccounts }: AccountsGridProps) {
 
   useEffect(() => {
     const supabase = createClient()
+    if (!supabase) return
 
     // Subscribe to realtime changes
     const accountsChannel = supabase
@@ -25,7 +26,6 @@ export function AccountsGrid({ initialAccounts }: AccountsGridProps) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'accounts' },
         async (payload: RealtimePostgresChangesPayload<Account>) => {
-          // Refetch all accounts with balances when any change occurs
           await refetchAccounts()
         }
       )
@@ -33,7 +33,6 @@ export function AccountsGrid({ initialAccounts }: AccountsGridProps) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'transactions' },
         async (payload: RealtimePostgresChangesPayload<Transaction>) => {
-          // Refetch when transactions change (affects balances)
           await refetchAccounts()
         }
       )
@@ -45,8 +44,10 @@ export function AccountsGrid({ initialAccounts }: AccountsGridProps) {
   }, [])
 
   const refetchAccounts = async () => {
-    setLoading(true)
     const supabase = createClient()
+    if (!supabase) return
+
+    setLoading(true)
 
     const { data: accountsData } = await supabase
       .from('accounts')
@@ -54,7 +55,6 @@ export function AccountsGrid({ initialAccounts }: AccountsGridProps) {
       .order('created_at', { ascending: false })
 
     if (accountsData) {
-      // Get transactions for each account to calculate balance
       const accountsWithBalance = await Promise.all(
         accountsData.map(async (account) => {
           const { data: transactions } = await supabase

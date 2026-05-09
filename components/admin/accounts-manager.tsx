@@ -55,7 +55,6 @@ export function AccountsManager({ accounts }: AccountsManagerProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const [form, setForm] = useState({
     nome: '',
@@ -84,6 +83,8 @@ export function AccountsManager({ accounts }: AccountsManagerProps) {
   }
 
   const handleCreate = async () => {
+    const supabase = createClient()
+    if (!supabase) return
     setLoading(true)
     await supabase.from('accounts').insert({
       nome: form.nome,
@@ -103,6 +104,8 @@ export function AccountsManager({ accounts }: AccountsManagerProps) {
 
   const handleUpdate = async () => {
     if (!editingAccount) return
+    const supabase = createClient()
+    if (!supabase) return
     setLoading(true)
     await supabase.from('accounts').update({
       nome: form.nome,
@@ -122,10 +125,14 @@ export function AccountsManager({ accounts }: AccountsManagerProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta conta? Todas as transacoes serao excluidas tambem.')) return
+    const supabase = createClient()
+    if (!supabase) return
     await supabase.from('accounts').delete().eq('id', id)
   }
 
   const handleToggleStatus = async (account: Account) => {
+    const supabase = createClient()
+    if (!supabase) return
     const newStatus = account.status === 'active' ? 'inactive' : 'active'
     await supabase.from('accounts').update({ status: newStatus }).eq('id', account.id)
   }

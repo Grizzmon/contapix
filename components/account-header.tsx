@@ -18,6 +18,7 @@ export function AccountHeader({ initialAccount }: AccountHeaderProps) {
 
   useEffect(() => {
     const supabase = createClient()
+    if (!supabase) return
 
     const channel = supabase
       .channel(`account-${account.id}`)
@@ -42,6 +43,7 @@ export function AccountHeader({ initialAccount }: AccountHeaderProps) {
 
   const refetchAccount = async () => {
     const supabase = createClient()
+    if (!supabase) return
 
     const { data: accountData } = await supabase
       .from('accounts')

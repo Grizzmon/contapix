@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Account, Transaction } from '@/lib/types'
@@ -12,7 +12,8 @@ import {
   Users, 
   ArrowLeftRight,
   Plus,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import { AccountsManager } from './accounts-manager'
@@ -26,12 +27,19 @@ export function AdminDashboard({ userEmail }: AdminDashboardProps) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
+      if (!supabase) {
+        setError('Supabase não configurado. Configure as variáveis de ambiente.')
+        setLoading(false)
+        return
+      }
+
       const [{ data: accountsData }, { data: transactionsData }] = await Promise.all([
         supabase.from('accounts').select('*').order('created_at', { ascending: false }),
         supabase.from('transactions').select('*').order('created_at', { ascending: false })
@@ -47,6 +55,8 @@ export function AdminDashboard({ userEmail }: AdminDashboardProps) {
 
   // Real-time subscriptions
   useEffect(() => {
+    if (!supabase) return
+
     const accountsChannel = supabase
       .channel('admin-accounts')
       .on(
@@ -84,7 +94,9 @@ export function AdminDashboard({ userEmail }: AdminDashboardProps) {
   }, [supabase])
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_session")
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem("admin_session")
+    }
     router.push('/admin/login')
   }
 
@@ -99,6 +111,18 @@ export function AdminDashboard({ userEmail }: AdminDashboardProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-foreground mb-2">Erro de Configuração</h1>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
       </div>
     )
   }
